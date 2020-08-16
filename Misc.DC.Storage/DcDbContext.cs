@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Misc.DC.Models;
 using System;
 using System.Collections.Generic;
@@ -16,15 +17,17 @@ namespace Misc.DC.Storage
             Database.Migrate();
             Database.EnsureCreated();
         }
-        public DcDbContext() { }
+        //public DcDbContext() { }
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            optionsBuilder.UseMySQL("Server=localhost;Database=OASystem2;User Id=root;password=123456;port=3306;Charset=utf8;SslMode=none;");
-            Database.Migrate();
-            Database.EnsureCreated();
-        }
+        //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        //{
+        //    //读取json文件
+        //    var config = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
+        //    var DbString = config.GetSection("ConnectionStrings:DBString").Value;
+        //    optionsBuilder.UseMySQL(DbString);
+        //}
         public DbSet<TempAndHumid> tempAndHumids { get; set; }
+        public DbSet<ProcessInfo> processInfos { get; set; }
 
     }
 
