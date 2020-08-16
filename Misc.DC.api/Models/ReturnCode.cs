@@ -10,5 +10,6 @@ namespace Misc.DC.api.Models
         ServerError = 400,
         ServerOK = 200,
         FitalError = 500,
+        ProcessExisted = 222
     }
 }

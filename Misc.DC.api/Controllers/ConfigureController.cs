@@ -53,7 +53,7 @@ namespace Misc.DC.api.Controllers
                 var data = from i in res join j in pro on i.processId equals j.Id select j;
                 if (data != null)
                 {
-                    return new JsonResult(new { serverData = "no", returnCode = ReturnCode.ServerError });
+                    return new JsonResult(new { serverData = "no", returnCode = ReturnCode.ProcessExisted });
                 }
             }
             #endregion
@@ -115,8 +115,9 @@ namespace Misc.DC.api.Controllers
             }
             return new JsonResult(new { serverData = "true", returnCode = ReturnCode.ServerOK });
         }
-        [HttpGet("GetSerialPortName")]
 
+
+        [HttpGet("GetSerialPortName")]
         public IActionResult GetSerialPortName()
         {
             var res = SerialPort.GetPortNames();
