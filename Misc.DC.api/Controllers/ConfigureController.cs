@@ -58,6 +58,7 @@ namespace Misc.DC.api.Controllers
             }
             #endregion
             _continue = true;
+            string sInfo = "";
             #region MyRegion
             //PortName = "COM3",
             //StopBits = StopBits.One,         
@@ -96,6 +97,7 @@ namespace Misc.DC.api.Controllers
                 string excuteFilePara = stringBuilder.ToString();
                 Console.WriteLine(str);
                 Process process = Process.Start(excuteFile, excuteFilePara);                            //启动一个数据进程
+                sInfo = process.StandardOutput.ReadToEnd();                                             //读取process的结果
                 ProcessInfo processInfo = new ProcessInfo()
                 {
                     processId = process.Id,
@@ -109,11 +111,10 @@ namespace Misc.DC.api.Controllers
                 //_serialPortDataServer.LoadData();
             }
             catch (Exception ex)
-
             {
-                return new JsonResult(new { serverData = ex, returnCode = ReturnCode.ServerError });
+                return new JsonResult(new { serverInfo = sInfo, serverData = ex, returnCode = ReturnCode.ServerError });
             }
-            return new JsonResult(new { serverData = "true", returnCode = ReturnCode.ServerOK });
+            return new JsonResult(new { serverData = "true", returnCode = ReturnCode.ServerOK, sInfo });
         }
 
 
@@ -123,12 +124,13 @@ namespace Misc.DC.api.Controllers
             var res = SerialPort.GetPortNames();
             return new JsonResult(new { serverData = res, returnCode = ReturnCode.ServerOK });
         }
+
         [HttpGet("GetSerialPort")]
         public IActionResult GetSerialPort()
         {
             return new JsonResult(new { serverData = _mySerialPort, returnCode = ReturnCode.ServerOK });
-
         }
+
         [HttpGet("StopSerialPort")]
         public IActionResult StopSerialPort()
         {
@@ -136,6 +138,24 @@ namespace Misc.DC.api.Controllers
             return new JsonResult(new { serverData = "true", returnCode = ReturnCode.ServerOK }); ;
 
         }
+
+        //获取已经打开的串口
+        [HttpGet("GetOpendSerialPort")]
+        public IActionResult GetOpendSerialPort()
+        {
+            var res = _dcDbContext.processInfos.Where(u => true);
+            return new JsonResult(new { serverData = _mySerialPort, returnCode = ReturnCode.ServerOK });
+        }
+
+        //获取可用的串口
+        [HttpGet("GetAvailableSerialPort")]
+        public IActionResult GetAvailableSerialPort()
+        {
+            var res0 = SerialPort.GetPortNames();
+            var res1 = _dcDbContext.processInfos.Where(u => true);
+            return new JsonResult(new { serverData = _mySerialPort, returnCode = ReturnCode.ServerOK });
+        }
+
 
         [HttpGet("StartProcess")]
         public IActionResult StartProcess()
@@ -148,10 +168,8 @@ namespace Misc.DC.api.Controllers
             };
             _dcDbContext.processInfos.Add(processInfo);
             _dcDbContext.SaveChanges();
-
             return new JsonResult(new { serverData = process.Id, returnCode = ReturnCode.ServerOK }); ;
         }
-
 
         [HttpGet("KillProcess")]
         public IActionResult KillProcess(int id)

@@ -9,9 +9,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="MySerialPort.cs">
-      <SubType>Component</SubType>
-    </Compile>
+    <Compile Update="MySerialPort.cs" />
   </ItemGroup>
 
 </Project>
