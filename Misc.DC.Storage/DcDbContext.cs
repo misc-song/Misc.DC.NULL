@@ -11,7 +11,8 @@ namespace Misc.DC.Storage
 {
     public class DcDbContext : DbContext
     {
-        //使用两个上下文 一个用于api 一个用于系统服务
+        //---使用两个上下文 一个用于api 一个用于系统服务
+        //修改 只做api部分 
         public DcDbContext(DbContextOptions options) : base(options)
         {
             Database.Migrate();

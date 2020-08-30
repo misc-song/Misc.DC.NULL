@@ -28,8 +28,11 @@ public class PortChat
         var port = config.GetSection("IPEndpoint:port").Value;
         //启用线程安全队列
         ConcurrentQueue<TempAndHumid> tempAndHumids = new ConcurrentQueue<TempAndHumid>();
-
-        List<string> ls = argv[0].Split(":").ToList();
+        //测试数据
+        string str = "COM3:1:115200:8:0:500:500";
+        List<string> ls =  str.Split(":").ToList();
+        //生产数据
+        //  List<string> ls = argv[0].Split(":").ToList();
         bool ok = true;
         foreach (var i in GetPortNames())
         {
@@ -47,10 +50,16 @@ public class PortChat
             ReadTimeout = int.Parse(ls[5]),
             WriteTimeout = int.Parse(ls[6])
         };
+        //SocketServer socketServer = new SocketServer(ok, IPAddress.Parse(ipAddress), int.Parse(port), tempAndHumids);
+        //socketServer.Start();
+        MyWebSocketServer myWebSocketServer = new MyWebSocketServer(tempAndHumids);
+        myWebSocketServer.Start();
         SerialPortDataServer serial = new SerialPortDataServer(ok, _serialPort, tempAndHumids, optionsBuilder);
         serial.LoadData();
-        SocketServer socketServer = new SocketServer(ok, IPAddress.Parse(ipAddress), int.Parse(port), tempAndHumids);
-        socketServer.Start();
+    
+
+
+
     }
     public static String[] GetPortNames()
     {

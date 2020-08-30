@@ -43,15 +43,15 @@ namespace Misc.DC.api.Controllers
 
 
         [HttpPost("SetSerialPort")]
-        public IActionResult SetSerialPort(string portName, int stopBits, int baudRate, int dataBits, int parity, int readTimeout, int writeTimeout)
+        public IActionResult SetSerialPort([FromForm] string portName, [FromForm] int stopBits, [FromForm] int baudRate, [FromForm] int dataBits, [FromForm] int parity, [FromForm] int readTimeout, [FromForm] int writeTimeout)
         {
             #region 检查检查进程是否存在
-            var res = _dcDbContext.processInfos.Where(u => true);
+            var res = _dcDbContext.processInfos.Where(u => true).ToList();
             if (res != null)
             {
                 Process[] pro = Process.GetProcesses();//获取bai已开启du的所有进程
-                var data = from i in res join j in pro on i.processId equals j.Id select j;
-                if (data != null)
+                var data = from i in res join j in pro on i.processId equals j.Id select j ;
+                if (data.ToList().Count > 0)
                 {
                     return new JsonResult(new { serverData = "no", returnCode = ReturnCode.ProcessExisted });
                 }
@@ -97,7 +97,7 @@ namespace Misc.DC.api.Controllers
                 string excuteFilePara = stringBuilder.ToString();
                 Console.WriteLine(str);
                 Process process = Process.Start(excuteFile, excuteFilePara);                            //启动一个数据进程
-                sInfo = process.StandardOutput.ReadToEnd();                                             //读取process的结果
+              //  sInfo = process.StandardOutput.ReadToEnd();                                             //读取process的结果
                 ProcessInfo processInfo = new ProcessInfo()
                 {
                     processId = process.Id,
@@ -118,8 +118,8 @@ namespace Misc.DC.api.Controllers
         }
 
 
-        [HttpGet("GetSerialPortName")]
-        public IActionResult GetSerialPortName()
+        [HttpGet("GetAllSerialPortName")]
+        public IActionResult GetAllSerialPortName()
         {
             var res = SerialPort.GetPortNames();
             return new JsonResult(new { serverData = res, returnCode = ReturnCode.ServerOK });

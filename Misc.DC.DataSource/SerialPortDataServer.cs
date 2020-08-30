@@ -27,6 +27,7 @@ namespace Misc.DC.DataSource
             _continue = __continue;
             _serialPort = serialPort;
             _concurrentQueue = concurrentQueue;
+            _optionsBuilder = optionsBuilder;
         }
 
         public void LoadData()
@@ -35,8 +36,8 @@ namespace Misc.DC.DataSource
             _serialPort.Open();
             // readThread.IsBackground = true;
             readThread.Start();
-            readThread.Join();
-            _serialPort.Close();
+           // readThread.Join();
+           // _serialPort.Close();
         }
 
         public static void Read()
@@ -56,7 +57,7 @@ namespace Misc.DC.DataSource
 
                         string name = list[0];
                         decimal value = res;
-                        //读取数据 一份保存在数据库中 一份使用 tcp推送到客户端（轮询即可 钱没给到位不需要实时推送ConcurrentQueue）
+                        //读取数据 一份保存在数据库中 一份使用 tcp和websocket推送到客户端（实时推送ConcurrentQueue）
                         TempAndHumid tempAndHumid = new TempAndHumid()
                         {
                             addDateTime = System.DateTime.Now,

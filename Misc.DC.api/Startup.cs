@@ -31,10 +31,22 @@ namespace Misc.DC.api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddCors(options => { options.AddPolicy("AllowAll", policy => { policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader(); }); });
+            //services.AddCors(c =>
+            //{
+            //    c.AddPolicy("AllRequests", policy =>
+            //    {
+            //        policy
+            //        .AllowAnyOrigin()
+            //        .AllowAnyMethod()
+            //        .AllowAnyHeader();
+
+            //    });
+            //});
             services.AddDbContext<DcDbContext>(option => option.UseMySQL(Configuration.GetConnectionString("DBString")));
             services.AddControllers();
             services.AddSingleton<MySerialPort>();
-        //    services.AddSingleton<SerialPortDataServer>();
+            //    services.AddSingleton<SerialPortDataServer>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -74,7 +86,7 @@ namespace Misc.DC.api
             app.UseWebSockets(webSocketOptions);
             #endregion
 #endif
-
+            app.UseCors("AllowAll");
             #region AcceptWebSocket
             app.Use(async (context, next) =>
             {

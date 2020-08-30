@@ -16,10 +16,10 @@ namespace Misc.DC.DataSource
     public class SocketServer
     {
         public IPAddress _ip { get; set; }
-        public  bool _continue { get; set; }
+        public bool _continue { get; set; }
         public int _port { get; set; }
         public ConcurrentQueue<TempAndHumid> _tempAndHumids { get; set; }
-        public SocketServer(bool __continue ,IPAddress ip, int port, ConcurrentQueue<TempAndHumid> tempAndHumids)
+        public SocketServer(bool __continue, IPAddress ip, int port, ConcurrentQueue<TempAndHumid> tempAndHumids)
         {
             _continue = __continue;
             _ip = ip;
@@ -61,9 +61,10 @@ namespace Misc.DC.DataSource
                     Thread thr = new Thread(ReceiveMsg);
                     //  th.IsBackground = true;
                     thr.Start(tSocket);
-                    thr.Join();
+                    //thr.Join();
                     Thread thw = new Thread(SentMsg);
                     thw.Start();
+                    //thw.Join();
                 }
                 catch (Exception ex)
                 {
@@ -84,7 +85,7 @@ namespace Misc.DC.DataSource
                     byte[] buffer = new byte[1024 * 1024];
                     int n = client.Receive(buffer);
                     string words = Encoding.UTF8.GetString(buffer, 0, n);
-                    Console.WriteLine(client.RemoteEndPoint.ToString() + ":" + words);
+                    //Console.WriteLine(client.RemoteEndPoint.ToString() + ":" + words);
                 }
                 catch (Exception ex)
                 {
@@ -98,20 +99,28 @@ namespace Misc.DC.DataSource
         {
             try
             {
-                List<TempAndHumid> temps = new List<TempAndHumid>();
-                foreach (var i in _tempAndHumids)
+                //List<TempAndHumid> temps = new List<TempAndHumid>();
+                //foreach (var i in _tempAndHumids)
+                //{
+                //    TempAndHumid tempAndHumid = new TempAndHumid();
+                //    _tempAndHumids.TryDequeue(out tempAndHumid);
+                //    temps.Append(tempAndHumid);
+                //}
+                while (_continue)
                 {
-                    TempAndHumid tempAndHumid = new TempAndHumid();
-                    _tempAndHumids.TryDequeue(out tempAndHumid);
-                    temps.Append(tempAndHumid);
-                }
-                var msg = JsonConvert.SerializeObject(temps);
-                byte[] buffer = Encoding.UTF8.GetBytes(msg);
-                
-                //像所有活动的链接中发送数据
-                foreach (var res in dic)
-                {
-                    dic[res.Key].Send(buffer);
+                    while (!_tempAndHumids.IsEmpty)
+                    {
+                        TempAndHumid tempAndHumid = new TempAndHumid();
+                        _tempAndHumids.TryDequeue(out tempAndHumid);
+                        var msg = JsonConvert.SerializeObject(tempAndHumid);
+                        byte[] buffer = Encoding.UTF8.GetBytes(msg);
+
+                        //像所有活动的链接中发送数据
+                        foreach (var res in dic)
+                        {
+                            dic[res.Key].Send(buffer);
+                        }
+                    }
                 }
             }
             catch (Exception ex)
