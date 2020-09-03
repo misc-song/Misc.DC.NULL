@@ -39,9 +39,6 @@ namespace Misc.DC.api.Controllers
         }
 
 
-
-
-
         [HttpPost("SetSerialPort")]
         public IActionResult SetSerialPort([FromForm] string portName, [FromForm] int stopBits, [FromForm] int baudRate, [FromForm] int dataBits, [FromForm] int parity, [FromForm] int readTimeout, [FromForm] int writeTimeout)
         {
@@ -49,8 +46,8 @@ namespace Misc.DC.api.Controllers
             var res = _dcDbContext.processInfos.Where(u => true).ToList();
             if (res != null)
             {
-                Process[] pro = Process.GetProcesses();//获取bai已开启du的所有进程
-                var data = from i in res join j in pro on i.processId equals j.Id select j ;
+                Process[] pro = Process.GetProcesses();//获取已开启的所有进程
+                var data = from i in res join j in pro on i.processId equals j.Id where i.processName == j.ProcessName select j ;
                 if (data.ToList().Count > 0)
                 {
                     return new JsonResult(new { serverData = "no", returnCode = ReturnCode.ProcessExisted });
