@@ -36,8 +36,8 @@ namespace Misc.DC.DataSource
             _serialPort.Open();
             // readThread.IsBackground = true;
             readThread.Start();
-           // readThread.Join();
-           // _serialPort.Close();
+            // readThread.Join();
+            // _serialPort.Close();
         }
 
         public static void Read()
@@ -49,8 +49,7 @@ namespace Misc.DC.DataSource
                     try
                     {
                         string message = _serialPort.ReadLine();
-                        Console.WriteLine(message);
-
+                        // Console.WriteLine(message);
                         List<string> list = message.Split("=").ToList();
                         decimal res = 0;
                         decimal.TryParse(list[1], out res);
@@ -66,7 +65,14 @@ namespace Misc.DC.DataSource
                         };
                         _dcDbContext.Add(tempAndHumid);
                         _dcDbContext.SaveChanges();
+                       // Console.WriteLine(_concurrentQueue.Count);
+                        //当队列中的数据大于8000时 清空队列 防止内存泄漏
+                        if (_concurrentQueue.Count > 8000)
+                        {
+                            _concurrentQueue.Clear();
+                        }
                         _concurrentQueue.Enqueue(tempAndHumid);
+
                     }
                     catch (Exception ex)
                     {

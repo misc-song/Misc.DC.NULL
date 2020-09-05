@@ -46,7 +46,7 @@ namespace Misc.DC.DataSource
 
         public void ConfigWebSocketServer()
         {
-            var server = new WebSocketServer("ws://" + _address + "+:+" + _port);
+            var server = new WebSocketServer("ws://" + _address + ":" + _port);
             server.Start(socket =>
             {
                 socket.OnOpen = () =>
@@ -62,10 +62,18 @@ namespace Misc.DC.DataSource
                             TempAndHumid tempAndHumid = new TempAndHumid();
                             _tempAndHumids.TryDequeue(out tempAndHumid);
                             var msg = JsonConvert.SerializeObject(tempAndHumid);
+                            if (msg == "null")
+                            {
+                                break;
+                            }
                             byte[] buffer = Encoding.UTF8.GetBytes(msg);
                             //像所有活动的链接中发送数据
+                            foreach (var item in dic_Sockets)
+                            {
+                                dic_Sockets[item.Key].Send(msg);
+                            }
                             // dic[res.Key].Send(buffer);
-                            socket.Send(msg);
+                            // socket.Send(msg);
                         }
                     }
                     Console.WriteLine("连接成功");
@@ -75,6 +83,7 @@ namespace Misc.DC.DataSource
                     //关闭连接 从字典中移除数据
                     string clientUrl = socket.ConnectionInfo.ClientIpAddress + ":" + socket.ConnectionInfo.ClientPort;
                     dic_Sockets.Remove(clientUrl);
+                    Console.WriteLine("Close One Client");
                 };
                 socket.OnMessage = message =>  //接受客户端网页消息事件
                 {
