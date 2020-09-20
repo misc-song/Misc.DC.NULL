@@ -88,26 +88,26 @@ namespace Misc.DC.api
 #endif
             app.UseCors("AllowAll");
             #region AcceptWebSocket
-            app.Use(async (context, next) =>
-            {
-                if (context.Request.Path == "/ws")
-                {
-                    if (context.WebSockets.IsWebSocketRequest)
-                    {
-                        WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
-                        await Echo(context, webSocket);
-                    }
-                    else
-                    {
-                        context.Response.StatusCode = 400;
-                    }
-                }
-                else
-                {
-                    await next();
-                }
+            //app.Use(async (context, next) =>
+            //{
+            //    if (context.Request.Path == "/ws")
+            //    {
+            //        if (context.WebSockets.IsWebSocketRequest)
+            //        {
+            //            WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
+            //            await Echo(context, webSocket);
+            //        }
+            //        else
+            //        {
+            //            context.Response.StatusCode = 400;
+            //        }
+            //    }
+            //    else
+            //    {
+            //        await next();
+            //    }
 
-            });
+            //});
             #endregion
             app.UseRouting();
 
