@@ -13,5 +13,7 @@ namespace Misc.DC.Models
         public int id { get; set; }                        //表id 自增
         public int processId { get; set; }              //进程id
         public string processName { get; set; }            //进程名称
+        public string comName { get; set; }                 //串口名称
+
     }
 }

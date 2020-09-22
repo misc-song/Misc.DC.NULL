@@ -56,6 +56,7 @@ namespace Misc.DC.api.Controllers
             #endregion
             _continue = true;
             string sInfo = "";
+            ProcessInfo info = null;
             #region MyRegion
             //PortName = "COM3",
             //StopBits = StopBits.One,         
@@ -93,12 +94,30 @@ namespace Misc.DC.api.Controllers
                 stringBuilder.Append(writeTimeout);
                 string excuteFilePara = stringBuilder.ToString();
                 Console.WriteLine(str);
+                //检查进程是否存在（数据库中和系统中）
+                info = _dcDbContext.processInfos.Where(u => true).FirstOrDefault();
+                Process[] pro = Process.GetProcesses();//获取已开启的所有进程
+                                                       //遍历所有查找到zhi的进程
+                for (int i = 0; i < pro.Length; i++)
+                {
+                  
+                    if (pro[i].Id == info.processId)
+                    {
+                        return new JsonResult(new { serverInfo = sInfo, serverData = "检测到进程已经在运行,请停止后再尝试.", returnCode = ReturnCode.ServerError });
+                    }
+                }
+
+
                 Process process = Process.Start(excuteFile, excuteFilePara);                            //启动一个数据进程
                                                                                                         //  sInfo = process.StandardOutput.ReadToEnd();                                             //读取process的结果
                 ProcessInfo processInfo = new ProcessInfo()
                 {
                     processId = process.Id,
-                    processName = process.ProcessName
+                    processName = process.ProcessName,
+                    comName = portName,
+
+
+
                 };
                 _dcDbContext.processInfos.Add(processInfo);
                 _dcDbContext.SaveChanges();
@@ -171,24 +190,27 @@ namespace Misc.DC.api.Controllers
         [HttpGet("KillProcess")]
         public IActionResult KillProcess(int id)
         {
-            Process[] pro = Process.GetProcesses();//获取bai已开启du的所有进程
+            Process[] pro = Process.GetProcesses();//获取已开启的所有进程
                                                    //遍历所有查找到zhi的进程
+            var res = _dcDbContext.processInfos.Where(u => u.id == id).FirstOrDefault();
             for (int i = 0; i < pro.Length; i++)
             {
-                //判断此进程是dao否是要查找的进程
-                if (pro[i].Id == id)
+                //判断此进程是否是要查找的进程
+                if (pro[i].Id == res.processId)
                 {
                     pro[i].Kill();//结束进程
                 }
             }
             //需要从数据库移除进程id
-            return new JsonResult(new { serverData = "ok", returnCode = ReturnCode.ServerOK }); ;
+            _dcDbContext.processInfos.Remove(res);
+            var data = _dcDbContext.SaveChanges() > 0 ? true : false;
+            return new JsonResult(new { serverData = "ok", returnCode = ReturnCode.ServerOK, data });
         }
 
         [HttpGet("GetRunningProcess")]
         public IActionResult GetRunningProcess()
         {
-            var res = _dcDbContext.processInfos.Where(u => true).OrderByDescending(u => u.id).FirstOrDefault();
+            var res = _dcDbContext.processInfos.Where(u => true).FirstOrDefault();
             return new JsonResult(new { serverData = res, returnCode = ReturnCode.ServerOK });
 
         }
