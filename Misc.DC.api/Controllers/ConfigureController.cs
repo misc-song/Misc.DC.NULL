@@ -50,7 +50,8 @@ namespace Misc.DC.api.Controllers
                 var data = from i in res join j in pro on i.processId equals j.Id where i.processName == j.ProcessName select j;
                 if (data.ToList().Count > 0)
                 {
-                    return new JsonResult(new { serverData = "no", returnCode = ReturnCode.ProcessExisted });
+                    return new JsonResult(new {  serverData = "检测到进程已经在运行,请停止后再尝试.", returnCode = ReturnCode.ServerError });
+                 //   return new JsonResult(new { serverData = "no", returnCode = ReturnCode.ProcessExisted });
                 }
             }
             #endregion
@@ -95,18 +96,20 @@ namespace Misc.DC.api.Controllers
                 string excuteFilePara = stringBuilder.ToString();
                 Console.WriteLine(str);
                 //检查进程是否存在（数据库中和系统中）
-                info = _dcDbContext.processInfos.Where(u => true).FirstOrDefault();
-                Process[] pro = Process.GetProcesses();//获取已开启的所有进程
-                                                       //遍历所有查找到zhi的进程
-                for (int i = 0; i < pro.Length; i++)
-                {
-                  
-                    if (pro[i].Id == info.processId)
-                    {
-                        return new JsonResult(new { serverInfo = sInfo, serverData = "检测到进程已经在运行,请停止后再尝试.", returnCode = ReturnCode.ServerError });
-                    }
-                }
+                //info = _dcDbContext.processInfos.Where(u => true).FirstOrDefault();
+                //if (info != null)
+                //{
+                //    Process[] pro = Process.GetProcesses();//获取已开启的所有进程
+                //                                           //遍历所有查找到zhi的进程
+                //    for (int i = 0; i < pro.Length; i++)
+                //    {
 
+                //        if (pro[i].Id == info.processId)
+                //        {
+                //            return new JsonResult(new { serverInfo = sInfo, serverData = "检测到进程已经在运行,请停止后再尝试.", returnCode = ReturnCode.ServerError });
+                //        }
+                //    }
+                //}
 
                 Process process = Process.Start(excuteFile, excuteFilePara);                            //启动一个数据进程
                                                                                                         //  sInfo = process.StandardOutput.ReadToEnd();                                             //读取process的结果

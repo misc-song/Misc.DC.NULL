@@ -29,10 +29,10 @@ public class PortChat
         //启用线程安全队列
         ConcurrentQueue<TempAndHumid> tempAndHumids = new ConcurrentQueue<TempAndHumid>();
         //测试数据
-         string str = "COM3:1:115200:8:0:500:500";
-          List<string> ls =  str.Split(":").ToList();
+       //  string str = "COM3:1:115200:8:0:500:500";
+         // List<string> ls =  str.Split(":").ToList();
         //生产数据
-       // List<string> ls = argv[0].Split(":").ToList();
+        List<string> ls = argv[0].Split(":").ToList();
         bool ok = true;
         foreach (var i in GetPortNames())
         {
