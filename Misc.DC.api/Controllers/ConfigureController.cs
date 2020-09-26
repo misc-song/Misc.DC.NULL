@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Ports;
@@ -8,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Misc.DC.api.Models;
 using Misc.DC.DataSource;
 using Misc.DC.Models;
@@ -23,20 +25,23 @@ namespace Misc.DC.api.Controllers
         private MySerialPort _mySerialPort { get; set; }
         //   private SerialPortDataServer _serialPortDataServer { get; set; }
         private DcDbContext _dcDbContext { get; set; }
-
-        public ConfigureController(MySerialPort mySerialPort,/* SerialPortDataServer serialPortDataServer,*/ DcDbContext dcDbContext)
+        public IConfiguration _configuration { get; set; }
+        public ConfigureController(MySerialPort mySerialPort,/* SerialPortDataServer serialPortDataServer,*/ DcDbContext dcDbContext, IConfiguration configuration)
         {
             _continue = true;
             _mySerialPort = mySerialPort;
             //  _serialPortDataServer = serialPortDataServer;
             _dcDbContext = dcDbContext;
+            _configuration = configuration;
         }
+        #region MyRegion
         //检查进程是否存在
-        [HttpGet("CheckProcessExist")]
-        public IActionResult CheckProcessExist()
-        {
-            return null;
-        }
+        //[HttpGet("CheckProcessExist")]
+        //public IActionResult CheckProcessExist()
+        //{
+        //    return null;
+        //} 
+        #endregion
 
 
         [HttpPost("SetSerialPort")]
@@ -50,14 +55,15 @@ namespace Misc.DC.api.Controllers
                 var data = from i in res join j in pro on i.processId equals j.Id where i.processName == j.ProcessName select j;
                 if (data.ToList().Count > 0)
                 {
-                    return new JsonResult(new {  serverData = "检测到进程已经在运行,请停止后再尝试.", returnCode = ReturnCode.ServerError });
-                 //   return new JsonResult(new { serverData = "no", returnCode = ReturnCode.ProcessExisted });
+                    return new JsonResult(new { sInfo = "检测到进程已经在运行,请停止后再尝试.", returnCode = ReturnCode.ServerError });
+                    //   return new JsonResult(new { serverData = "no", returnCode = ReturnCode.ProcessExisted });
                 }
             }
             #endregion
             _continue = true;
             string sInfo = "";
-            ProcessInfo info = null;
+            //    ProcessInfo info = null;
+            string excuteFilePath = _configuration.GetSection("ServerConfig:Path").Value;
             #region MyRegion
             //PortName = "COM3",
             //StopBits = StopBits.One,         
@@ -77,8 +83,8 @@ namespace Misc.DC.api.Controllers
                 _mySerialPort.Parity = (Parity)parity;
                 _mySerialPort.ReadTimeout = readTimeout;
                 _mySerialPort.WriteTimeout = writeTimeout;
-                string str = AppDomain.CurrentDomain.BaseDirectory;
-                string excuteFile = Path.GetFullPath("..") + @"\Misc.DC.NULL\bin\Release\net5.0\publish\Misc.DC.NULL.exe";
+                //  string str = AppDomain.CurrentDomain.BaseDirectory;
+                //string excuteFile = Path.GetFullPath("..") + path;
                 StringBuilder stringBuilder = new StringBuilder();
                 stringBuilder.Append(portName);
                 stringBuilder.Append(":");
@@ -94,7 +100,7 @@ namespace Misc.DC.api.Controllers
                 stringBuilder.Append(":");
                 stringBuilder.Append(writeTimeout);
                 string excuteFilePara = stringBuilder.ToString();
-                Console.WriteLine(str);
+                // Console.WriteLine(str);
                 //检查进程是否存在（数据库中和系统中）
                 //info = _dcDbContext.processInfos.Where(u => true).FirstOrDefault();
                 //if (info != null)
@@ -110,30 +116,29 @@ namespace Misc.DC.api.Controllers
                 //        }
                 //    }
                 //}
-
-                Process process = Process.Start(excuteFile, excuteFilePara);                            //启动一个数据进程
-                                                                                                        //  sInfo = process.StandardOutput.ReadToEnd();                                             //读取process的结果
+                Process process = Process.Start(excuteFilePath, excuteFilePara);    //启动一个数据进程
+                                                                                    //  sInfo = process.StandardOutput.ReadToEnd();                         //读取process的结果
                 ProcessInfo processInfo = new ProcessInfo()
                 {
                     processId = process.Id,
                     processName = process.ProcessName,
                     comName = portName,
-
-
-
                 };
                 _dcDbContext.processInfos.Add(processInfo);
                 _dcDbContext.SaveChanges();
-
                 //SerialPortDataServer dataServer = new SerialPortDataServer(_continue, _mySerialPort);
                 //_serialPortDataServer.ConfigSerial(_continue, _mySerialPort);
                 //_serialPortDataServer.LoadData();
             }
             catch (Exception ex)
             {
-                return new JsonResult(new { serverInfo = sInfo, serverData = ex, returnCode = ReturnCode.ServerError });
+                return new JsonResult(new
+                {
+                    sInfo = ex.Message,
+                    returnCode = ReturnCode.ServerError
+                });
             }
-            return new JsonResult(new { serverData = "true", returnCode = ReturnCode.ServerOK, sInfo });
+            return new JsonResult(new { returnCode = ReturnCode.ServerOK, sInfo = "服务启动成功" });
         }
 
 
@@ -175,7 +180,6 @@ namespace Misc.DC.api.Controllers
             return new JsonResult(new { serverData = _mySerialPort, returnCode = ReturnCode.ServerOK });
         }
 
-
         [HttpGet("StartProcess")]
         public IActionResult StartProcess()
         {
@@ -193,19 +197,16 @@ namespace Misc.DC.api.Controllers
         [HttpGet("KillProcess")]
         public IActionResult KillProcess(int id)
         {
-            Process[] pro = Process.GetProcesses();//获取已开启的所有进程
-                                                   //遍历所有查找到zhi的进程
+            Process[] pro = Process.GetProcesses();             //获取已开启的所有进程
             var res = _dcDbContext.processInfos.Where(u => u.id == id).FirstOrDefault();
-            for (int i = 0; i < pro.Length; i++)
+            for (int i = 0; i < pro.Length; i++)                //遍历所有查找到的进程
             {
-                //判断此进程是否是要查找的进程
-                if (pro[i].Id == res.processId)
+                if (pro[i].Id == res.processId)  //判断此进程是否是要查找的进程
                 {
                     pro[i].Kill();//结束进程
                 }
             }
-            //需要从数据库移除进程id
-            _dcDbContext.processInfos.Remove(res);
+            _dcDbContext.processInfos.Remove(res);      //需要从数据库移除进程id
             var data = _dcDbContext.SaveChanges() > 0 ? true : false;
             return new JsonResult(new { serverData = "ok", returnCode = ReturnCode.ServerOK, data });
         }
@@ -215,9 +216,32 @@ namespace Misc.DC.api.Controllers
         {
             var res = _dcDbContext.processInfos.Where(u => true).FirstOrDefault();
             return new JsonResult(new { serverData = res, returnCode = ReturnCode.ServerOK });
-
         }
 
-
+        [HttpGet("ClearCache")]
+        public IActionResult ClearCache()
+        {
+            bool flag = false;
+            var res = _dcDbContext.processInfos.Where(u => true);
+            _dcDbContext.processInfos.RemoveRange(res);
+            bool data = _dcDbContext.SaveChanges() > 0 ? true : false;
+            Process[] pro = Process.GetProcesses();
+            for (int i = 0; i < pro.Length; i++)
+            {
+                if (pro[i].ProcessName == "Misc.DC.NULL")  //判断此进程是否是要查找的进程
+                {
+                    pro[i].Kill();//结束进程
+                }
+            }
+            flag = true;
+            if (data || flag)
+            {
+                return new JsonResult(new { sInfo = "刷新成功", returnCode = ReturnCode.ServerOK });
+            }
+            else
+            {
+                return new JsonResult(new { sInfo = "刷新失败", returnCode = ReturnCode.ServerError });
+            }
+        }
     }
 }
